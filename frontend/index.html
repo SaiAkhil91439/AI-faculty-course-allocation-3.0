@@ -166,46 +166,42 @@
 
                     <!-- File Upload Dropzones -->
                     <div class="upload-section">
-                        <h3><i class="fa-solid fa-file-upload"></i> Excel Data Sources</h3>
+                        <div class="upload-section-header">
+                            <h3><i class="fa-solid fa-file-excel"></i> Faculty Input Data</h3>
+                            <span class="badge badge-info" style="font-size: 0.72rem;">Single Combined Input</span>
+                        </div>
                         
-                        <!-- File 1: Course Details (L-T-P-C) -->
-                        <div class="dropzone" id="dropzoneCourse">
+                        <!-- Primary File: Combined Faculty Input (Preferences, Experience, Designation) -->
+                        <div class="dropzone dropzone-primary" id="dropzoneFaculty" style="border: 2px dashed #6366f1; background: rgba(99, 102, 241, 0.06); padding: 16px;">
+                            <input type="file" id="fileFaculty" accept=".xlsx, .xls" hidden>
+                            <div class="dropzone-content">
+                                <i class="fa-solid fa-file-excel drop-icon" style="color: #6366f1; font-size: 26px;"></i>
+                                <div class="drop-text">
+                                    <strong style="color: #f8fafc; font-size: 14px;">Single Combined Faculty Input Excel</strong>
+                                    <span>Drag & drop or <a href="#" class="browse-link" onclick="document.getElementById('fileFaculty').click(); return false;">browse</a></span>
+                                    <small id="nameFaculty" class="file-name" style="color: #38bdf8; font-weight: 500;">Using default faculty_sample_combined.xlsx</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Secondary File: Course Details L-T-P-C (Optional) -->
+                        <div class="dropzone dropzone-optional" id="dropzoneCourse" style="border: 1px dashed #475569; background: rgba(15, 23, 42, 0.4); padding: 12px; margin-top: 6px;">
                             <input type="file" id="fileCourse" accept=".xlsx, .xls" hidden>
                             <div class="dropzone-content">
-                                <i class="fa-solid fa-table drop-icon"></i>
+                                <i class="fa-solid fa-table drop-icon" style="color: #94a3b8; font-size: 20px;"></i>
                                 <div class="drop-text">
-                                    <strong>Course Details (L-T-P-C) Excel</strong>
+                                    <strong style="font-size: 13px;">Course Details (L-T-P-C) Structure <small style="color: #94a3b8; font-weight: normal;">(Optional)</small></strong>
                                     <span>Drag & drop or <a href="#" class="browse-link" onclick="document.getElementById('fileCourse').click(); return false;">browse</a></span>
-                                    <small id="nameCourse" class="file-name">Using default course_details.xlsx</small>
+                                    <small id="nameCourse" class="file-name" style="color: #64748b;">Using default course_details.xlsx</small>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- File 2: Preferences -->
-                        <div class="dropzone" id="dropzonePref">
-                            <input type="file" id="filePref" accept=".xlsx, .xls" hidden>
-                            <div class="dropzone-content">
-                                <i class="fa-solid fa-file-excel drop-icon"></i>
-                                <div class="drop-text">
-                                    <strong>Faculty Preference Excel</strong>
-                                    <span>Drag & drop or <a href="#" class="browse-link" onclick="document.getElementById('filePref').click(); return false;">browse</a></span>
-                                    <small id="namePref" class="file-name">Using default faculty_sample_combined.xlsx</small>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- File 3: Experience & Qualification -->
-                        <div class="dropzone" id="dropzoneExp">
-                            <input type="file" id="fileExp" accept=".xlsx, .xls" hidden>
-                            <div class="dropzone-content">
-                                <i class="fa-solid fa-file-excel drop-icon"></i>
-                                <div class="drop-text">
-                                    <strong>Qualification & Experience Excel</strong>
-                                    <span>Drag & drop or <a href="#" class="browse-link" onclick="document.getElementById('fileExp').click(); return false;">browse</a></span>
-                                    <small id="nameExp" class="file-name">Using default faculty_sample_combined.xlsx</small>
-                                </div>
-                            </div>
-                        </div>
+                        <!-- Hidden fallback inputs for backward compatibility -->
+                        <input type="file" id="filePref" accept=".xlsx, .xls" hidden>
+                        <input type="file" id="fileExp" accept=".xlsx, .xls" hidden>
+                        <span id="namePref" style="display:none;"></span>
+                        <span id="nameExp" style="display:none;"></span>
                     </div>
 
 
@@ -367,24 +363,18 @@
             </div>
             <div class="modal-body">
                 <div class="preview-tabs">
-                    <button class="preview-tab-btn active" data-preview="previewCourse">Course Details (L-T-P-C)</button>
-                    <button class="preview-tab-btn" data-preview="previewPref">Faculty Preferences</button>
-                    <button class="preview-tab-btn" data-preview="previewExp">Qualifications & Experience</button>
+                    <button class="preview-tab-btn active" data-preview="previewFaculty">Combined Faculty Input Data</button>
+                    <button class="preview-tab-btn" data-preview="previewCourse">Course Details (L-T-P-C)</button>
                 </div>
                 <div class="preview-content">
-                    <div class="preview-pane active" id="previewCourse">
+                    <div class="preview-pane active" id="previewFaculty">
+                        <div class="table-wrapper" id="previewFacultyContainer">
+                            <p class="preview-placeholder">No custom faculty file uploaded. Using default faculty_sample_combined.xlsx.</p>
+                        </div>
+                    </div>
+                    <div class="preview-pane" id="previewCourse">
                         <div class="table-wrapper" id="previewCourseContainer">
-                            <p class="preview-placeholder">No custom course details uploaded. Using default sample data.</p>
-                        </div>
-                    </div>
-                    <div class="preview-pane" id="previewPref">
-                        <div class="table-wrapper" id="previewPrefContainer">
-                            <p class="preview-placeholder">No custom preferences uploaded. Using default sample data.</p>
-                        </div>
-                    </div>
-                    <div class="preview-pane" id="previewExp">
-                        <div class="table-wrapper" id="previewExpContainer">
-                            <p class="preview-placeholder">No custom experience uploaded. Using default sample data.</p>
+                            <p class="preview-placeholder">No custom course details uploaded. Using default course_details.xlsx.</p>
                         </div>
                     </div>
                 </div>

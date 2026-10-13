@@ -31,12 +31,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const valQual = document.getElementById('valQual');
 
     const fileCourse = document.getElementById('fileCourse');
+    const fileFaculty = document.getElementById('fileFaculty');
     const filePref = document.getElementById('filePref');
     const fileExp = document.getElementById('fileExp');
     const nameCourse = document.getElementById('nameCourse');
+    const nameFaculty = document.getElementById('nameFaculty');
     const namePref = document.getElementById('namePref');
     const nameExp = document.getElementById('nameExp');
     const dropzoneCourse = document.getElementById('dropzoneCourse');
+    const dropzoneFaculty = document.getElementById('dropzoneFaculty');
     const dropzonePref = document.getElementById('dropzonePref');
     const dropzoneExp = document.getElementById('dropzoneExp');
 
@@ -163,9 +166,10 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    setupDropzone(dropzoneFaculty, fileFaculty, nameFaculty, 'Using default faculty_sample_combined.xlsx');
     setupDropzone(dropzoneCourse, fileCourse, nameCourse, 'Using default course_details.xlsx');
-    setupDropzone(dropzonePref, filePref, namePref, 'Using default faculty_sample_combined.xlsx');
-    setupDropzone(dropzoneExp, fileExp, nameExp, 'Using default faculty_sample_combined.xlsx');
+    if (dropzonePref) setupDropzone(dropzonePref, filePref, namePref, 'Using default faculty_sample_combined.xlsx');
+    if (dropzoneExp) setupDropzone(dropzoneExp, fileExp, nameExp, 'Using default faculty_sample_combined.xlsx');
 
     // 4. Download Sample Excel
     btnDownloadSample.addEventListener('click', async () => {
@@ -229,9 +233,16 @@ document.addEventListener('DOMContentLoaded', () => {
         formData.append('hod_max_sections', hodMaxSectionsInput.value);
         if (highExpThresholdInput) formData.append('high_exp_threshold', highExpThresholdInput.value);
 
+        // Send Combined Faculty file if selected
+        if (fileFaculty && fileFaculty.files.length > 0) {
+            formData.append('faculty_file', fileFaculty.files[0]);
+            formData.append('pref_file', fileFaculty.files[0]);
+        } else if (filePref && filePref.files.length > 0) {
+            formData.append('pref_file', filePref.files[0]);
+            if (fileExp && fileExp.files.length > 0) formData.append('exp_file', fileExp.files[0]);
+        }
+
         if (fileCourse && fileCourse.files.length > 0) formData.append('course_file', fileCourse.files[0]);
-        if (filePref && filePref.files.length > 0) formData.append('pref_file', filePref.files[0]);
-        if (fileExp && fileExp.files.length > 0) formData.append('exp_file', fileExp.files[0]);
 
         try {
             const response = await fetch('/api/validate', {
@@ -274,9 +285,16 @@ document.addEventListener('DOMContentLoaded', () => {
         formData.append('weight_skill', parseFloat(weightSkill.value) / (totalW || 100));
         formData.append('weight_qual', parseFloat(weightQual.value) / (totalW || 100));
 
+        // Send Combined Faculty file if selected
+        if (fileFaculty && fileFaculty.files.length > 0) {
+            formData.append('faculty_file', fileFaculty.files[0]);
+            formData.append('pref_file', fileFaculty.files[0]);
+        } else if (filePref && filePref.files.length > 0) {
+            formData.append('pref_file', filePref.files[0]);
+            if (fileExp && fileExp.files.length > 0) formData.append('exp_file', fileExp.files[0]);
+        }
+
         if (fileCourse && fileCourse.files.length > 0) formData.append('course_file', fileCourse.files[0]);
-        if (filePref && filePref.files.length > 0) formData.append('pref_file', filePref.files[0]);
-        if (fileExp && fileExp.files.length > 0) formData.append('exp_file', fileExp.files[0]);
 
         try {
             const response = await fetch('/api/allocate', {
@@ -612,9 +630,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btnPreviewExcel && previewModal) {
         btnPreviewExcel.addEventListener('click', async () => {
             previewModal.classList.remove('hidden');
+            const targetFacultyInput = (fileFaculty && fileFaculty.files.length > 0) ? 'fileFaculty' : 'filePref';
+            await loadExcelPreview(targetFacultyInput, 'previewFacultyContainer', 'Combined Faculty Input');
             await loadExcelPreview('fileCourse', 'previewCourseContainer', 'Course Details');
-            await loadExcelPreview('filePref', 'previewPrefContainer', 'Faculty Preferences');
-            await loadExcelPreview('fileExp', 'previewExpContainer', 'Qualifications & Experience');
         });
 
         modalCloseBtn.addEventListener('click', () => {

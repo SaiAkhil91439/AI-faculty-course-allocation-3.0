@@ -294,9 +294,12 @@ def solve_faculty_allocation(
             c_info = course_info_map[s]
 
             final_allocation_matrix[sec][s] = {
-                "Lecture_Faculty": f"{assigned_L_id} ({l_name})",
-                "TP_Faculty_1": f"{assigned_TP1_id} ({tp1_name})",
-                "TP_Faculty_2": f"{assigned_TP2_id} ({tp2_name})",
+                "Lecture_Faculty": l_name,
+                "Lecture_Faculty_ID": assigned_L_id,
+                "TP_Faculty_1": tp1_name,
+                "TP_Faculty_1_ID": assigned_TP1_id,
+                "TP_Faculty_2": tp2_name,
+                "TP_Faculty_2_ID": assigned_TP2_id,
                 "LTPC": c_info["L-T-P-C"]
             }
 

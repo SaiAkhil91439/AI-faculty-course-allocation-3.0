@@ -105,14 +105,19 @@ async def get_sample_files(request: Request):
     pref_path = os.path.join(UPLOAD_DIR, "faculty_preferences.xlsx")
     exp_path = os.path.join(UPLOAD_DIR, "faculty_experience.xlsx")
     course_path = os.path.join(UPLOAD_DIR, "course_details.xlsx")
+    comb_path = os.path.join(UPLOAD_DIR, "faculty_sample_combined.xlsx")
     
-    if not os.path.exists(pref_path) or not os.path.exists(exp_path) or not os.path.exists(course_path):
+    if not os.path.exists(comb_path) or not os.path.exists(course_path):
         generate_sample_files(UPLOAD_DIR)
 
     zip_buffer = io.BytesIO()
     with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
-        zip_file.write(pref_path, arcname="faculty_preferences.xlsx")
-        zip_file.write(exp_path, arcname="faculty_experience.xlsx")
+        if os.path.exists(comb_path):
+            zip_file.write(comb_path, arcname="faculty_sample_combined.xlsx")
+        if os.path.exists(pref_path):
+            zip_file.write(pref_path, arcname="faculty_preferences.xlsx")
+        if os.path.exists(exp_path):
+            zip_file.write(exp_path, arcname="faculty_experience.xlsx")
         if os.path.exists(course_path):
             zip_file.write(course_path, arcname="course_details.xlsx")
     
@@ -133,19 +138,35 @@ async def validate_allocation_request(
     dean_max_sections: int = Form(2),
     hod_max_sections: int = Form(3),
     high_exp_threshold: float = Form(8.0),
+    faculty_file: Optional[UploadFile] = File(None),
     pref_file: Optional[UploadFile] = File(None),
     exp_file: Optional[UploadFile] = File(None),
     course_file: Optional[UploadFile] = File(None)
 ):
     """
     Validates uploaded Excel files and configuration inputs.
-    Returns preview summary if valid, or clear error list if invalid.
+    Accepts single combined faculty file or legacy split files.
     """
     if not is_authenticated(request):
         raise HTTPException(status_code=401, detail="Authentication required.")
     try:
-        pref_src = pref_file.file if pref_file else os.path.join(UPLOAD_DIR, "faculty_preferences.xlsx")
-        exp_src = exp_file.file if exp_file else os.path.join(UPLOAD_DIR, "faculty_experience.xlsx")
+        target_fac = faculty_file or pref_file
+        if target_fac:
+            pref_src = target_fac.file
+            exp_src = exp_file.file if exp_file else None
+        elif exp_file:
+            comb_sample = os.path.join(UPLOAD_DIR, "faculty_sample_combined.xlsx")
+            pref_src = comb_sample if os.path.exists(comb_sample) else os.path.join(UPLOAD_DIR, "faculty_preferences.xlsx")
+            exp_src = exp_file.file
+        else:
+            comb_sample = os.path.join(UPLOAD_DIR, "faculty_sample_combined.xlsx")
+            if os.path.exists(comb_sample):
+                pref_src = comb_sample
+                exp_src = None
+            else:
+                pref_src = os.path.join(UPLOAD_DIR, "faculty_preferences.xlsx")
+                exp_src = os.path.join(UPLOAD_DIR, "faculty_experience.xlsx")
+
         course_src = course_file.file if course_file else (
             os.path.join(UPLOAD_DIR, "course_details.xlsx") if os.path.exists(os.path.join(UPLOAD_DIR, "course_details.xlsx")) else None
         )
@@ -198,18 +219,35 @@ async def run_allocation(
     weight_exp: float = Form(0.30),
     weight_skill: float = Form(0.20),
     weight_qual: float = Form(0.10),
+    faculty_file: Optional[UploadFile] = File(None),
     pref_file: Optional[UploadFile] = File(None),
     exp_file: Optional[UploadFile] = File(None),
     course_file: Optional[UploadFile] = File(None)
 ):
     """
     Runs full allocation pipeline: Validation -> Scoring -> OR-Tools Optimization -> Excel Export -> AI Explanation.
+    Accepts single combined faculty file or legacy split files.
     """
     if not is_authenticated(request):
         raise HTTPException(status_code=401, detail="Authentication required.")
     try:
-        pref_src = pref_file.file if pref_file else os.path.join(UPLOAD_DIR, "faculty_preferences.xlsx")
-        exp_src = exp_file.file if exp_file else os.path.join(UPLOAD_DIR, "faculty_experience.xlsx")
+        target_fac = faculty_file or pref_file
+        if target_fac:
+            pref_src = target_fac.file
+            exp_src = exp_file.file if exp_file else None
+        elif exp_file:
+            comb_sample = os.path.join(UPLOAD_DIR, "faculty_sample_combined.xlsx")
+            pref_src = comb_sample if os.path.exists(comb_sample) else os.path.join(UPLOAD_DIR, "faculty_preferences.xlsx")
+            exp_src = exp_file.file
+        else:
+            comb_sample = os.path.join(UPLOAD_DIR, "faculty_sample_combined.xlsx")
+            if os.path.exists(comb_sample):
+                pref_src = comb_sample
+                exp_src = None
+            else:
+                pref_src = os.path.join(UPLOAD_DIR, "faculty_preferences.xlsx")
+                exp_src = os.path.join(UPLOAD_DIR, "faculty_experience.xlsx")
+
         course_src = course_file.file if course_file else (
             os.path.join(UPLOAD_DIR, "course_details.xlsx") if os.path.exists(os.path.join(UPLOAD_DIR, "course_details.xlsx")) else None
         )
@@ -239,6 +277,7 @@ async def run_allocation(
         )
 
         return JSONResponse(content=jsonable_encoder(sanitize_for_json(result)))
+
     except AllocationValidationError as e:
         return JSONResponse(status_code=400, content=jsonable_encoder(sanitize_for_json({
             "success": False,
